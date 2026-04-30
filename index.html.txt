@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+<title>Marccalculator</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b1220">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, Arial;
+  background: linear-gradient(180deg, #0b1220, #020617);
+  color: white;
+}
+
+.app {
+  max-width: 380px;
+  margin: auto;
+  padding: 20px 15px;
+}
+
+h2 {
+  text-align: center;
+  font-weight: 600;
+  margin-bottom: 15px;
+}
+
+input {
+  width: 100%;
+  padding: 16px;
+  border-radius: 14px;
+  border: none;
+  background: #1e293b;
+  color: white;
+  font-size: 18px;
+  outline: none;
+  margin-bottom: 12px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+button {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  border-radius: 14px;
+  background: #1e293b;
+  color: white;
+  font-size: 16px;
+  transition: 0.2s;
+}
+
+.primary {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+button:active {
+  transform: scale(0.95);
+  opacity: 0.9;
+}
+
+label {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+#result {
+  background: #020617;
+  padding: 20px;
+  border-radius: 16px;
+  margin: 15px 0;
+  text-align: center;
+  font-size: 18px;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.grid button {
+  height: 60px;
+  font-size: 18px;
+  border-radius: 16px;
+  background: #1e293b;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.equal {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="app">
+
+  <h2>MarcCalculator</h2>
+
+  <input id="input" placeholder="Type 5+5 or 4,6,8">
+
+  <div class="actions">
+    <button onclick="solveInput()" class="primary">Solve</button>
+    <button onclick="clearInput()">Clear</button>
+  </div>
+
+  <label>
+    <input type="checkbox" id="explainMode"> Explain
+  </label>
+
+  <div id="result">Result will appear here</div>
+
+  <div class="grid">
+    <button onclick="press('7')">7</button>
+    <button onclick="press('8')">8</button>
+    <button onclick="press('9')">9</button>
+    <button onclick="press('/')">÷</button>
+
+    <button onclick="press('4')">4</button>
+    <button onclick="press('5')">5</button>
+    <button onclick="press('6')">6</button>
+    <button onclick="press('*')">×</button>
+
+    <button onclick="press('1')">1</button>
+    <button onclick="press('2')">2</button>
+    <button onclick="press('3')">3</button>
+    <button onclick="press('-')">−</button>
+
+    <button onclick="press('0')">0</button>
+    <button onclick="press('.')">.</button>
+    <button onclick="press('%')">%</button>
+    <button onclick="press(',')">,</button>
+    <button onclick="solveInput()" class="equal">=</button>
+    <button onclick="press('+')">+</button>
+  </div>
+
+</div>
+
+<script>
+function press(val) {
+  document.getElementById("input").value += val;
+}
+
+function clearInput() {
+  document.getElementById("input").value = "";
+  document.getElementById("result").innerText = "Result will appear here";
+}
+
+function solveInput() {
+  let rawInput = document.getElementById("input").value.trim();
+  let input = rawInput.toLowerCase();
+  let explain = document.getElementById("explainMode").checked;
+
+  try {
+    // Quadratic
+    let quadMatch = input.replace(/\s+/g, '').match(/x\^2([+-]\d*)x([+-]\d+)/);
+
+    if (quadMatch) {
+      let b = quadMatch[1] === "+" || quadMatch[1] === "" ? 1 :
+              quadMatch[1] === "-" ? -1 : parseFloat(quadMatch[1]);
+
+      let c = parseFloat(quadMatch[2]);
+
+      let d = b * b - 4 * c;
+
+      if (d < 0) {
+        document.getElementById("result").innerText = "No real solutions";
+        return;
+      }
+
+      let x1 = (-b + Math.sqrt(d)) / 2;
+      let x2 = (-b - Math.sqrt(d)) / 2;
+
+      document.getElementById("result").innerText =
+        explain
+          ? `Quadratic:\nx = ${x1.toFixed(2)}, ${x2.toFixed(2)}`
+          : `x = ${x1.toFixed(2)}, ${x2.toFixed(2)}`;
+
+      return;
+    }
+
+    // Statistics
+    if (input.includes(",")) {
+      let numbers = input.split(",").map(Number).filter(n => !isNaN(n));
+
+      if (numbers.length === 0) throw "Invalid";
+
+      let mean = numbers.reduce((a, b) => a + b, 0) / numbers.length;
+
+      let sorted = [...numbers].sort((a, b) => a - b);
+      let mid = Math.floor(sorted.length / 2);
+
+      let median = sorted.length % 2 !== 0
+        ? sorted[mid]
+        : (sorted[mid - 1] + sorted[mid]) / 2;
+
+      let freq = {};
+      numbers.forEach(n => freq[n] = (freq[n] || 0) + 1);
+
+      let maxFreq = Math.max(...Object.values(freq));
+      let mode = Object.keys(freq).filter(n => freq[n] == maxFreq);
+
+      let variance = numbers.reduce((sum, n) => sum + Math.pow(n - mean, 2), 0) / numbers.length;
+      let sd = Math.sqrt(variance);
+
+      document.getElementById("result").innerText =
+        explain
+          ? `Mean = ${mean.toFixed(2)}
+Median = ${median}
+Mode = ${mode.join(", ")}
+SD = ${sd.toFixed(2)}`
+          : `Mean = ${mean.toFixed(2)}`;
+
+      return;
+    }
+
+    // Normal calc
+    let result = eval(input);
+    document.getElementById("result").innerText = "Result = " + result;
+
+  } catch {
+    document.getElementById("result").innerText = "Invalid input";
+  }
+}
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+   navigator.serviceWorker.register("sw.js", {
+  scope: "./"
+  });
+}
+</script>
+
+</body>
+</html>
